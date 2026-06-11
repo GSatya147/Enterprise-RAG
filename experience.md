@@ -1,0 +1,3 @@
+#### failure experience:
+
+1. **Loading document corpus:** Tried langchain components explicitly for loading document corpus of pdfs which has 2 column styled, 1 column styles arxiv pdf, `PDFPlumber` loader with custom configurations performed awful. tried others `PymuPDF` performed significantly better with minimal/default configurations, this shows pymupdf has more layout level awareness even tho it doesn't respect the spaces and layout decors, it gets the job done with the text.
