@@ -1,0 +1,4 @@
+papers/
+.env
+chromadb/
+__pycache__/
