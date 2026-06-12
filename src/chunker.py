@@ -1,20 +1,16 @@
 import os
 
 from langchain_text_splitters import RecursiveCharacterTextSplitter
+from sentence_transformers import SentenceTransformer
 from loader import Loader
 
 class Chunker:
-    def __init__(self, chunk_size, loader_docs, model):
+    def __init__(self, chunk_size, loader_docs, tokenizer):
         self.CHUNK_SIZE = chunk_size
         self.CHUNK_OVERLAP = int(0.15 * self.CHUNK_SIZE)
-        self.model = model
 
         self.data = loader_docs
-
-        try:
-            self.tokenizer = self.model.tokenizer
-        except Exception as e:
-            print(e)
+        self.tokenizer = tokenizer
 
     def corpus_chunker(self)-> list[dict]:
 
@@ -45,16 +41,27 @@ class Chunker:
         return chunk_dict_list
 
     def sanity_check(self)-> None:
+        print(f"documents length: {len(self.data)}")
         print(f"Chunks: {len(self.chunks)}")
-        print(f"First chunk length: {len(self.tokeniser.encode(self.chunks[0].page_content))}")
-        print(f"Pen-ultimate chunk length: {len(self.tokeniser.encode(self.chunks[-2].page_content))}")
-        print(f"Ultimate chunk length: {len(self.tokeniser.encode(self.chunks[-1].page_content))}") 
+        print(f"First chunk length: {len(self.tokenizer.encode(self.chunks[0].page_content))}")
+        print(f"Pen-ultimate chunk length: {len(self.tokenizer.encode(self.chunks[-2].page_content))}")
+        print(f"Ultimate chunk length: {len(self.tokenizer.encode(self.chunks[-1].page_content))}") 
+
+        print(f"Chunk no: 50 , content: {self.chunks[49].page_content}")
+        print(f"Chunk no: 100, content: {self.chunks[99].page_content}")
+        print(f"Chunk no: 150, content: {self.chunks[149].page_content}")
 
 if __name__=="__main__":
     loader_obj = Loader("papers/") 
     docs = loader_obj.corpus_loader()
 
-    chunker_obj = Chunker(1000, docs)
+    try:
+        model = SentenceTransformer("voyageai/voyage-4-nano", trust_remote_code=True, truncate_dim=1024)
+        tokenizer = model.tokenizer
+    except Exception as e:
+        print(e)
+
+    chunker_obj = Chunker(1000, docs, tokenizer)
     chunks = chunker_obj.corpus_chunker()
 
     chunker_obj.sanity_check()
