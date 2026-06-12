@@ -18,6 +18,3 @@ class Loader:
 
         return self.docs
 
-# print(docs[0].metadata)
-# print(docs[0].page_content)
-# print(docs[100].metadata)

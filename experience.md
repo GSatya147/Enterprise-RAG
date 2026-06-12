@@ -4,4 +4,4 @@
 
 2. **Data cleaning:** Sometimes we need to overengineer, tbh whatever we do in dataset engineering is never over engineering at all. Ignoring references/bibliographies in the data, automatically pollutes the individual chunks, even tho reranker ranks them low and prevents them never contaminating LLM context, still indexing-wasted-resources are not worth for individual chunks which are not useful. especially at scale. SPEND SOME TIME IN DATASET ENGINEERING.
 
-3. **Embedding:**
+3. **Embedding:** Local CPU embedding voyage model: 30 mins +, Managed voyageAi API: 10 seconds. hmmmm.
