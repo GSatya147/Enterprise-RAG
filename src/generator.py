@@ -1,8 +1,6 @@
 import os
 from google import genai
 from google.genai import types, errors
-from reranker import Reranker
-from retriever import Retriever
 from dotenv import load_dotenv
 
 load_dotenv()
@@ -41,7 +39,7 @@ class ResponseGenerator:
             response_stream = self.client.models.generate_content_stream(
                 model=os.getenv("GEMINI_MODEL"),
                 contents=user_query,
-                config=types.GenerateContentConfig(system_instruction=sys_prompt, max_output_tokens=1000),
+                config=types.GenerateContentConfig(system_instruction=sys_prompt),
             )
 
             for chunk in response_stream:
@@ -60,15 +58,15 @@ class ResponseGenerator:
         except Exception as e:
             print(f"Unexpected error: {e}")
 
-if __name__=="__main__":
-    user_query = input(">> ")
+# if __name__=="__main__":
+#     user_query = input(">> ")
 
-    retriever_obj = Retriever(user_query=user_query)
-    retriever_results = retriever_obj.corpus_retriever()
+#     retriever_obj = Retriever(user_query=user_query)
+#     retriever_results = retriever_obj.corpus_retriever()
 
-    reranker_obj = Reranker(user_query=user_query)
-    reranker_results = reranker_obj.corpus_reranker(retriever_results=retriever_results)
+#     reranker_obj = Reranker(user_query=user_query)
+#     reranker_results = reranker_obj.corpus_reranker(retriever_results=retriever_results)
 
-    generator_obj = ResponseGenerator()
-    for chunk in generator_obj.response_generator(user_query=user_query, reranker_results=reranker_results):
-        print(chunk, end=" ")
+#     generator_obj = ResponseGenerator()
+#     for chunk in generator_obj.response_generator(user_query=user_query, reranker_results=reranker_results):
+#         print(chunk, end=" ")

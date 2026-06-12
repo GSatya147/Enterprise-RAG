@@ -3,8 +3,6 @@ import os
 from dotenv import load_dotenv
 import voyageai
 
-from retriever import Retriever
-
 load_dotenv()
 voyage_key = os.getenv("VOYAGE_API_KEY")
 
@@ -44,13 +42,13 @@ class Reranker:
         except Exception as e:
             print(e)
        
-if __name__=="__main__":
-    user_query = input(">> ")
+# if __name__=="__main__":
+#     user_query = input(">> ")
 
-    retriever_obj = Retriever(user_query=user_query)
-    retriever_results = retriever_obj.corpus_retriever()
+#     retriever_obj = Retriever(user_query=user_query)
+#     retriever_results = retriever_obj.corpus_retriever()
 
-    reranker_obj = Reranker(user_query=user_query)
-    reranker_results = reranker_obj.corpus_reranker(retriever_results=retriever_results)
+#     reranker_obj = Reranker(user_query=user_query)
+#     reranker_results = reranker_obj.corpus_reranker(retriever_results=retriever_results)
 
-    print(reranker_results)
+#     print(reranker_results)

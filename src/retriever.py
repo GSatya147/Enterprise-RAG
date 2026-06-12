@@ -51,10 +51,10 @@ class Retriever:
         except Exception as e:
             print(e)
 
-if __name__=="__main__":
-    user_query = input(">> ")
+# if __name__=="__main__":
+#     user_query = input(">> ")
 
-    retriever_obj = Retriever(user_query=user_query)
-    retriever_results = retriever_obj.corpus_retriever()
+#     retriever_obj = Retriever(user_query=user_query)
+#     retriever_results = retriever_obj.corpus_retriever()
 
-    print(retriever_results)
+#     print(retriever_results)
