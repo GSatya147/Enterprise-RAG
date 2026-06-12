@@ -14,7 +14,7 @@ voyage_key=os.getenv("VOYAGE_API_KEY")
 
 class VectorEmbedder:
     def __init__(self, chunk_docs):
-        self.EMBED_AND_STORE = True
+        self.EMBED_AND_STORE = False
         self.chunker_result = chunk_docs
 
         try:
@@ -30,7 +30,7 @@ class VectorEmbedder:
             for i, chunk in enumerate(self.chunker_result):
                 if running_tokens + chunk["metadata"]["token_count"] > 5000: 
                     self.embeddings.extend(self.vo_client.embed(texts=current_batch, model=os.getenv("EMBEDDING_MODEL")).embeddings)
-                    print(f"Batch: {i+1}, done")
+                    print(f"Chunk batches: {i+1}, done")
                     running_tokens = 0
                     current_batch = []
                 
@@ -39,6 +39,7 @@ class VectorEmbedder:
             
             if current_batch:
                 self.embeddings.extend(self.vo_client.embed(texts=current_batch, model=os.getenv("EMBEDDING_MODEL")).embeddings)
+                print("final chunk batch done")
 
             return self.embeddings
         
@@ -48,6 +49,7 @@ class VectorEmbedder:
     def vector_store(self):
         if self.EMBED_AND_STORE:
             self.corpus_embedder()
+            assert len(self.embeddings) == len(self.chunker_result), f"Mismatch: {len(self.embeddings)} embeddings vs {len(self.chunker_result)} chunks"
 
             data_dict_field: list[dict] = []
 
@@ -64,7 +66,7 @@ class VectorEmbedder:
             
             try:
                 pc = Pinecone(api_key=pinecone_key)
-                index_name = "satya-RAGLens"
+                index_name = "satya-raglens"
 
                 if not pc.has_index(index_name):
                     pc.create_index(
@@ -77,8 +79,7 @@ class VectorEmbedder:
 
                 index = pc.Index(index_name)
 
-                if self.EMBED_AND_STORE:
-                    index.upsert(vectors=data_dict_field, namespace="RAGLens-references")
+                index.upsert(vectors=data_dict_field, namespace="raglens-references")
             
             except Exception as e:
                 print(e)
@@ -100,5 +101,4 @@ if __name__=="__main__":
     embeddings = embedder_obj.vector_store()
 
     if embedder_obj.EMBED_AND_STORE:
-        print(embedder_obj.embeddings)
         print(len(embedder_obj.embeddings))
