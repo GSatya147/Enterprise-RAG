@@ -17,7 +17,7 @@ class Retriever:
         except Exception as e:
             print(e)
 
-    def corpus_retriever(self, n_results=5, filter=None):
+    def corpus_retriever(self, n_results=10, filter=None):
         try:
             pc = Pinecone(api_key=pinecone_key)
             index_name = "satya-raglens"
