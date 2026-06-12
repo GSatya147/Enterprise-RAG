@@ -45,7 +45,8 @@ class ResponseGenerator:
             )
 
             for chunk in response_stream:
-                yield chunk
+                if chunk.text:
+                    yield chunk.text
 
         except errors.ClientError as e:  # explore other codes like 400, 401, 404
             if e.code == 429:
@@ -70,4 +71,4 @@ if __name__=="__main__":
 
     generator_obj = ResponseGenerator()
     for chunk in generator_obj.response_generator(user_query=user_query, reranker_results=reranker_results):
-        print(chunk.text, end=" ")
+        print(chunk, end=" ")
