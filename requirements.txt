@@ -4,3 +4,4 @@ langchain-text-splitters==1.1.2
 pdfplumber==0.11.9
 pinecone==9.1.0
 pymupdf==1.27.2.3
+voyageai==0.4.0
