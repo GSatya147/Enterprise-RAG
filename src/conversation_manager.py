@@ -3,9 +3,9 @@ class ConversationManager:
         self.CONTEXT: list[dict] = []
 
     def add_context(self, message: str, role: str) -> list[dict]:
-        message_dict = {"role": role, "parts": message}
+        message_dict = {"role": role, "parts": [{"text" : message}]}
 
-        self.CONTEXT.extend([message_dict])
+        self.CONTEXT.append(message_dict)
 
     def get_history(self):
         return self.CONTEXT

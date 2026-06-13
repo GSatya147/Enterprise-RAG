@@ -1,6 +1,9 @@
 import os
 from google import genai
 from google.genai import types, errors
+from retriever import Retriever
+from reranker import Reranker
+from conversation_manager import ConversationManager
 from dotenv import load_dotenv
 
 load_dotenv()
@@ -61,15 +64,18 @@ class ResponseGenerator:
         except Exception as e:
             print(f"Unexpected error: {e}")
 
-# if __name__=="__main__":
-#     user_query = input(">> ")
+if __name__=="__main__":
+    user_query = input(">> ")
 
-#     retriever_obj = Retriever(user_query=user_query)
-#     retriever_results = retriever_obj.corpus_retriever()
+    retriever_obj = Retriever(user_query=user_query)
+    retriever_results = retriever_obj.corpus_retriever()
 
-#     reranker_obj = Reranker(user_query=user_query)
-#     reranker_results = reranker_obj.corpus_reranker(retriever_results=retriever_results)
+    reranker_obj = Reranker(user_query=user_query)
+    reranker_results = reranker_obj.corpus_reranker(retriever_results=retriever_results)
 
-#     generator_obj = ResponseGenerator()
-#     for chunk in generator_obj.response_generator(user_query=user_query, reranker_results=reranker_results):
-#         print(chunk, end=" ")
+    conv = ConversationManager()
+    conv.add_context(user_query, "user") 
+
+    generator_obj = ResponseGenerator(context=conv.get_history())
+    for chunk in generator_obj.response_generator(reranker_results=reranker_results):
+        print(chunk, end=" ")
