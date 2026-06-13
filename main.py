@@ -1,12 +1,13 @@
 import os
 import streamlit as st
 
+from src.conversation_manager import ConversationManager
 from src.generator import ResponseGenerator
 from src.reranker import Reranker
 from src.retriever import Retriever
 
 if 'CONTEXT' not in st.session_state:
-    st.session_state.CONTEXT = []
+    st.session_state.CONTEXT = ConversationManager()
 if 'sources_list' not in st.session_state:
     st.session_state.sources_list = []
 
@@ -20,7 +21,7 @@ with st.sidebar:
         st.write(os.path.basename(source))
 
 # render chat history
-for message in st.session_state.CONTEXT:
+for message in st.session_state.CONTEXT.get_history():
     with st.chat_message(message["role"]):
         st.write(message["parts"])
 
@@ -29,7 +30,8 @@ if prompt := st.chat_input("Type here"):
         with st.chat_message("user"):
             st.write(prompt)
 
-        CONTEXT += [{"role": "user", "parts": prompt}]
+        # CONTEXT += [{"role": "user", "parts": prompt}]
+        CONTEXT.add_context(prompt, "user")
 
         retriever_obj = Retriever(user_query=prompt)
         retriever_results = retriever_obj.corpus_retriever()
@@ -39,11 +41,12 @@ if prompt := st.chat_input("Type here"):
 
         st.session_state.sources_list = [r.get("source") for r in reranker_results]
 
-        generator_obj = ResponseGenerator()
+        generator_obj = ResponseGenerator(CONTEXT.get_history())
         with st.chat_message("assistant"):
-            assistant_response_string = st.write_stream(generator_obj.response_generator(user_query=prompt, reranker_results=reranker_results))
+            assistant_response_string = st.write_stream(generator_obj.response_generator(reranker_results=reranker_results))
 
-        CONTEXT += [{"role": "model", "parts": assistant_response_string}]
+        # CONTEXT += [{"role": "model", "parts": assistant_response_string}]
+        CONTEXT.add_context(assistant_response_string, "model")
 
     except Exception as e:
         print(e)

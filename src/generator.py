@@ -6,7 +6,9 @@ from dotenv import load_dotenv
 load_dotenv()
 
 class ResponseGenerator:
-    def __init__(self):
+    def __init__(self, context):
+        self.context_history = context
+
         try:
             self.client = genai.Client(
                 api_key=os.getenv("GEMINI_API_KEY"),
@@ -23,13 +25,13 @@ class ResponseGenerator:
         except Exception as e:
             print(e)
 
-    def response_generator(self, user_query, reranker_results):
+    def response_generator(self, reranker_results):
         context = "\n\n".join(
             [f"content: {reranker_results[i].get("content")}, id : {reranker_results[i].get("id")}, source : {reranker_results[i].get("source")}"
              for i in range(len(reranker_results))]
         )
 
-        sys_prompt = f"""
+        self.sys_prompt = f"""
             you are a RAG, Agentic AI knowledge specialist, answer only on the basis of provided context:
             <context>{context}</context>
             if the given context is inadequate, just answer "It is out of the provided knowledge" ONLY.
@@ -38,8 +40,8 @@ class ResponseGenerator:
         try:
             response_stream = self.client.models.generate_content_stream(
                 model=os.getenv("GEMINI_MODEL"),
-                contents=user_query,
-                config=types.GenerateContentConfig(system_instruction=sys_prompt),
+                contents=self.context_history,
+                config=types.GenerateContentConfig(system_instruction=self.sys_prompt),
             )
 
             for chunk in response_stream:
