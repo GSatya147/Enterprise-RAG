@@ -37,6 +37,7 @@ class ResponseGenerator:
             if the given context is inadequate, just answer "It is out of the provided knowledge" ONLY.
         """
 
+        print(self.context_history)
         try:
             response_stream = self.client.models.generate_content_stream(
                 model=os.getenv("GEMINI_MODEL"),
