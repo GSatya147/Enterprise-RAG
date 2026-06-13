@@ -84,21 +84,21 @@ class VectorEmbedder:
             except Exception as e:
                 print(e)
         
-if __name__=="__main__":
-    loader_obj = Loader("papers/") 
-    docs = loader_obj.corpus_loader()
+# if __name__=="__main__":
+#     loader_obj = Loader("papers/") 
+#     docs = loader_obj.corpus_loader()
 
-    try:
-        model = SentenceTransformer("voyageai/voyage-4-nano", trust_remote_code=True, truncate_dim=1024)
-        tokenizer = model.tokenizer
-    except Exception as e:
-        print(e)
+#     try:
+#         model = SentenceTransformer("voyageai/voyage-4-nano", trust_remote_code=True, truncate_dim=1024)
+#         tokenizer = model.tokenizer
+#     except Exception as e:
+#         print(e)
 
-    chunker_obj = Chunker(1000, docs, tokenizer)
-    chunks = chunker_obj.corpus_chunker()
+#     chunker_obj = Chunker(1000, docs, tokenizer)
+#     chunks = chunker_obj.corpus_chunker()
 
-    embedder_obj = VectorEmbedder(chunks)
-    embeddings = embedder_obj.vector_store()
+#     embedder_obj = VectorEmbedder(chunks)
+#     embeddings = embedder_obj.vector_store()
 
-    if embedder_obj.EMBED_AND_STORE:
-        print(len(embedder_obj.embeddings))
+#     if embedder_obj.EMBED_AND_STORE:
+#         print(len(embedder_obj.embeddings))

@@ -59,3 +59,16 @@ class ResponseGenerator:
 
         except Exception as e:
             print(f"Unexpected error: {e}")
+
+# if __name__=="__main__":
+#     user_query = input(">> ")
+
+#     retriever_obj = Retriever(user_query=user_query)
+#     retriever_results = retriever_obj.corpus_retriever()
+
+#     reranker_obj = Reranker(user_query=user_query)
+#     reranker_results = reranker_obj.corpus_reranker(retriever_results=retriever_results)
+
+#     generator_obj = ResponseGenerator()
+#     for chunk in generator_obj.response_generator(user_query=user_query, reranker_results=reranker_results):
+#         print(chunk, end=" ")
