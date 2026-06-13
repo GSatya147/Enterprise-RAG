@@ -21,7 +21,8 @@ with st.sidebar:
         st.write(os.path.basename(source))
 
 # render chat history
-for message in st.session_state.CONTEXT.get_history():
+history = st.session_state.CONTEXT.get_history()
+for message in history:
     with st.chat_message(message["role"]):
         st.write(message["parts"])
 
@@ -30,7 +31,6 @@ if prompt := st.chat_input("Type here"):
         with st.chat_message("user"):
             st.write(prompt)
 
-        # CONTEXT += [{"role": "user", "parts": prompt}]
         CONTEXT.add_context(prompt, "user")
 
         retriever_obj = Retriever(user_query=prompt)
@@ -45,7 +45,6 @@ if prompt := st.chat_input("Type here"):
         with st.chat_message("assistant"):
             assistant_response_string = st.write_stream(generator_obj.response_generator(reranker_results=reranker_results))
 
-        # CONTEXT += [{"role": "model", "parts": assistant_response_string}]
         CONTEXT.add_context(assistant_response_string, "model")
 
     except Exception as e:
