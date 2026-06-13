@@ -1,9 +1,6 @@
 import os
 from google import genai
 from google.genai import types, errors
-from retriever import Retriever
-from reranker import Reranker
-from conversation_manager import ConversationManager
 from dotenv import load_dotenv
 
 load_dotenv()
@@ -40,7 +37,6 @@ class ResponseGenerator:
             if the given context is inadequate, just answer "It is out of the provided knowledge" ONLY.
         """
 
-        print(self.context_history)
         try:
             response_stream = self.client.models.generate_content_stream(
                 model=os.getenv("GEMINI_MODEL"),
@@ -64,18 +60,18 @@ class ResponseGenerator:
         except Exception as e:
             print(f"Unexpected error: {e}")
 
-if __name__=="__main__":
-    user_query = input(">> ")
+# if __name__=="__main__":
+#     user_query = input(">> ")
 
-    retriever_obj = Retriever(user_query=user_query)
-    retriever_results = retriever_obj.corpus_retriever()
+#     retriever_obj = Retriever(user_query=user_query)
+#     retriever_results = retriever_obj.corpus_retriever()
 
-    reranker_obj = Reranker(user_query=user_query)
-    reranker_results = reranker_obj.corpus_reranker(retriever_results=retriever_results)
+#     reranker_obj = Reranker(user_query=user_query)
+#     reranker_results = reranker_obj.corpus_reranker(retriever_results=retriever_results)
 
-    conv = ConversationManager()
-    conv.add_context(user_query, "user") 
+#     conv = ConversationManager()
+#     conv.add_context(user_query, "user") 
 
-    generator_obj = ResponseGenerator(context=conv.get_history())
-    for chunk in generator_obj.response_generator(reranker_results=reranker_results):
-        print(chunk, end=" ")
+#     generator_obj = ResponseGenerator(context=conv.get_history())
+#     for chunk in generator_obj.response_generator(reranker_results=reranker_results):
+#         print(chunk, end=" ")

@@ -24,7 +24,7 @@ with st.sidebar:
 history = st.session_state.CONTEXT.get_history()
 for message in history:
     with st.chat_message(message["role"]):
-        st.write(message["parts"])
+        st.write(message["parts"][0]["text"])
 
 if prompt := st.chat_input("Type here"):
     try:
