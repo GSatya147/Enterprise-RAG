@@ -30,3 +30,15 @@ I'd build a loading layer that does three things upfront:
 - Parse once, store the raw structured output (the typed elements with metadata) in a intermediate format like JSONL. this is your "parse cache". now if you want to experiment with different chunking strategies later, you don't re-parse. re-parsing is expensive, especially with cloud parsers. parse once, chunk many times.  
 - Validate at load time. before a document enters your pipeline I'd run a quick sanity check: did we extract at least N characters? did table count match expected? are there encoding issues (`\x00` null bytes, garbled `unicode`)? if a document fails validation, it goes to a quarantine queue, not silently into your index. silent bad documents are the worst failure mode because you only discover them when a user asks a question that should be answerable and isn't.  
 
+**Failure Modes**
+Most important, most problems, inexpectations raise from the very first stage of pipeline  
+1. Scanned PDF treated as text PDF, you embedding model gets air. Cus scanned PDF won't return text chunks at all.  
+2. Multi-column layout interleaving (classic two columned arXiv papers).  
+3. Table exctraction as flat text, convert tables to markdown while parsing.  
+4. Header/footer noise, unneccessary pollution in chunks.   
+5. Encoding issues, avoid getting garbages and be careful while loading with correct encoding.  
+
+**When not to over-engineer**
+- If your document corpus is controlled and you own the source: say it's a wiki, a knowledge base you manage, markdown files you wrote, don't use a heavy parser. just read the markdown directly. you already have structure. using `Unstructured` or `LlamaParse` on clean markdown is overkill, adds latency and cost, and can actually remove structure by flattening it.  
+- If you're doing high-throughput batch indexing, you need to think about whether cloud-based parsers (`LlamaParse`, `Reducto`) are going to cost you a fortune and be your bottleneck. in that case, a self-hosted Docling or Marker-PDF is worth the setup cost.
+- VLM-assisted parsing (`GPT-4V` looking at page images) is powerful but expensive. use it selectively, maybe only on the pages where your lightweight parser returned suspicious output (too short, too many special characters). don't run every page through a vision model.
