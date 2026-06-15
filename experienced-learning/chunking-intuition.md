@@ -33,66 +33,66 @@ Three questions, in this order:
 1. what's the document's information density?   
 2. *strategy:* Uniform (FAQ, blog) → fixed-size is fine. Variable (legal, academic, financial) → you need a strategy that respects semantic units.  
 
-### 2. The strategies, their intuition, and where they earn their cost
-#### Different chunking strategies
-Let's go as a progression of strategies, improving from the previous one.
+### 2. The strategies, their intuition, and where they earn their cost  
+#### Different chunking strategies  
+Let's go as a progression of strategies, improving from the previous one.  
 
-**1. Fixed-sizing/recursive character splitting**  
-- "Cut every N tokens, add some overlap."
-- Recursive is slightly smarter, it tries to split on paragraph breaks first, then sentences, then words, then characters, falling back down the hierarchy until it hits your size limit. it respects natural language breaks where it can.
-*When does it earn it's cost?*
-- When your corpus is homogeneous and your queries are lookup-style. if you're building a chatbot over a product FAQ or a single-domain knowledge base with consistent document structure, this is the right call. fast, deterministic, no external dependencies, easy to debug. don't overthink it here.
-*When does it break?*
-- The moment your corpus has variable information density. a financial report has three paragraphs of boilerplate legal disclaimer followed by one dense paragraph that contains everything meaningful. fixed-size will split that dense paragraph in half and bury the boilerplate in multiple chunks nobody should ever retrieve.
+**1. Fixed-sizing/recursive character splitting**    
+- "Cut every N tokens, add some overlap."  
+- Recursive is slightly smarter, it tries to split on paragraph breaks first, then sentences, then words, then characters, falling back down the hierarchy until it hits your size limit. it respects natural language breaks where it can.  
+*When does it earn it's cost?*  
+- When your corpus is homogeneous and your queries are lookup-style. if you're building a chatbot over a product FAQ or a single-domain knowledge base with consistent document structure, this is the right call. fast, deterministic, no external dependencies, easy to debug. don't overthink it here.  
+*When does it break?*  
+- The moment your corpus has variable information density. a financial report has three paragraphs of boilerplate legal disclaimer followed by one dense paragraph that contains everything meaningful. fixed-size will split that dense paragraph in half and bury the boilerplate in multiple chunks nobody should ever retrieve.  
 
-**2. Semantic chunking**
+**2. Semantic chunking**  
 - Instead of cutting by token count, you cut by meaning shift. the idea: embed every sentence, then slide a window across and measure cosine similarity between adjacent sentences. when similarity drops sharply, that's a topic boundary cut there.
 - You're letting the content tell you where it wants to be split rather than imposing an arbitrary size. 
-*Honest caveats*
+*Honest caveats*  
 - It is roughly 14x slower than former one, cus of indexing and embedding the large corpus at chunking level itself.
 - The similarity drop can never happen, considering academic research's every sentence is related - undersplitting
 - The benchmark from Feb 2026 resulted 43 tokens chunks - the opposite, over-splitting  
-*Closing notes*
+*Closing notes*  
 - Semantic chunking works gracefully on long-form narratives where context/topic switching is real and gradual like novels, transcripts, books, essays.
 - It struggels on dense technical corpus
 - And is over-kill for homogeneous content
 
-**3. Hierarical/parent-child chunking**
-- Most elegant solution for context vs precision tension and mostly used.
+**3. Hierarical/parent-child chunking**  
+- Most elegant solution for context vs precision tension and mostly used.  
 - The idea = you maintain both simulataneously
 - Small child chunks: maybe 128-256 tokens goes into your vector index. these are what get retrieved because they're precise and tightly scoped. but when you retrieve a child chunk, you don't send it to the LLM. instead you look up its parent, a larger 512-1024 token chunk that contains the child, send that to the LLM for generation.
 - Insight: the retrieval and generation has two different optimal chunk sizes, retrieval needs precision(child chunk) and generation needs context (parent chunk).
-*Cheap alternative*
+*Cheap alternative*  
 - The `sentence-window` variant is the simpler implementation of the same idea: you index individual sentences but when you retrieve one, you return the surrounding window (say 2 sentences before and after). no separate parent document store needed, just a metadata pointer.  
-*Honest caveats*
+*Honest caveats*  
 - Maintaining two index levels means updates in the corpus gonna be expensive.
 - If document changes, you need to change indices both in sync
 - And parent chunk size needs tuning per domain, cus it's the same problem again too large means noise, too small no learning at all.
 
-**4. Late chunking**
+**4. Late chunking**  
 - In standard chunking you split first, then embed. the problem is each chunk is embedded in isolation. so a chunk containing "its revenue grew 3%" has no idea that "its" refers to Apple, because Apple was in a different chunk that got processed separately.
 - Late chunking flips the order. you take the entire document, pass it through a long-context embedding model (Jina's long-context models are the reference implementation here), get token-level embeddings for every token in the document all at once, with full document context. then you pool those token embeddings within your chunk boundaries to produce chunk embeddings.
 - The key: when you pool, each token embedding already carries global document context because the attention mechanism saw the whole document. 
 - The practical implication is significant for documents with lots of anaphoric references pronouns, "the company," "the aforementioned clause" things that only make sense in context. late chunking improved retrieval on these by 10-12% in research settings.
-*Honest caveats*
+*Honest caveats*  
 - You need long context embeddings models
 - The arxiv paper from April 2025 noted that late chunking trades semantic coherence for efficiency, `contextual retrieval` preserves coherence better, late chunking is faster but can sacrifice relevance on complex queries.
 
-**5. Contextual Retrieval (Anthropic's approach)**
+**5. Contextual Retrieval (Anthropic's approach)**  
 - Chunk first normally, then for every chunk, call an LLM with the full document and the chunk and ask it to generate a 50-100 token context summary describing what this chunk is about in the context of the whole document. prepend that summary to the chunk before embedding.
 - So instead of embedding "revenue grew 3% last quarter", you embed "This chunk is from Apple's Q3 2024 earnings report. It describes quarterly revenue performance relative to the previous quarter. Revenue grew 3% last quarter."
 - The embedding is now massively more informative. Anthropic's own numbers: 49% reduction in retrieval failures with hybrid search, 67% when combined with reranking. that's not a marginal gain.
-*Honest Caveats*
+*Honest Caveats*  
 - For a corpus of 100,000 chunks that's 100,000 LLM calls. that's expensive. 
-- The mitigation is prompt caching, since the document prefix is the same across all calls for a given document, you cache it and only pay for the chunk-specific part. Anthropic claims this brings the cost down by up to 90% with their caching implementation.
+- The mitigation is prompt caching, since the document prefix is the same across all calls for a given document, you cache it and only pay for the chunk-specific part. Anthropic claims this brings the cost down by up to 90% with their caching implementation.  
 
-**Notes:** Late chunking is more cheap but needs long context embedding model, degrades for very long documents. Contextual retrieval is expensive but works on any embedding model and document.
+**Notes:** Late chunking is more cheap but needs long context embedding model, degrades for very long documents. Contextual retrieval is expensive but works on any embedding model and document.  
 
-**6. Structure aware/element type routing**
+**6. Structure aware/element type routing**  
 - Tables are atomic. embed a table as one unit, optionally with its caption and column headers prepended as context.
 - Headings should be propagated into their child chunks as metadata or as a prefix.
-- code blocks/snippets are atomic.
-- If your parser gave you typed elements (which it should, from loading), your chunker should consume those types and apply different rules per type. this is the architecture most people don't build because they treat chunking as a generic text operation rather than a document-structure-aware operation.
+- code blocks/snippets are atomic.  
+- If your parser gave you typed elements (which it should, from loading), your chunker should consume those types and apply different rules per type. this is the architecture most people don't build because they treat chunking as a generic text operation rather than a document-structure-aware operation.  
 
 ### 3. Failure modes and the Decision Framework
 #### Failure modes that matter
