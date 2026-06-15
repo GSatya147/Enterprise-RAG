@@ -20,24 +20,18 @@ Everyone thinks overlap is the fix. add 10-20% overlap and your context loss goe
 Three questions, in this order:  
 - **Query based**  
 1. What's the query type?  
-2. Is the user asking lookup question (precision - smaller chunk strategy) like *what is the refund policy?* or reasoning question (context- larger chunk strategy) like *compare q1 and q2 across the product lines*.  
-3. *Strategy:* 
-- For loop-up: precision type - smaller chunks startegy. 
-- For reasoning: context type - larger chunks strategy
+2. Is the user asking lookup question (precision - smaller chunk strategy) like *what is the refund policy?* or reasoning question (context- larger chunk strategy) like *compare q1 and q2 across the product lines*.    
+3. *Strategy:* For loop-up: precision type - smaller chunks startegy. For reasoning: context type - larger chunks strategy  
 
-- **Document structure based**  
-1. What's the document structure? 
-2. Does it have natural semantic boundaries (sections, headings, paragraphs, clauses)? or 
-3. Is it dense prose where boundaries are implicit? 
-4. *Strategy:* 
-- Structured docs → structure-aware splitting. 
-- Dense prose → semantic splitting.  
+- **Document structure based**      
+1. What's the document structure?  
+2. Does it have natural semantic boundaries (sections, headings, paragraphs, clauses)? or  
+3. Is it dense prose where boundaries are implicit?  
+4. *Strategy:* Structured docs → structure-aware splitting. Dense prose → semantic splitting.    
 
-- **Document information based**
-1. what's the document's information density? 
-2. *strategy:*
-- Uniform (FAQ, blog) → fixed-size is fine. 
-- Variable (legal, academic, financial) → you need a strategy that respects semantic units.
+- **Document information based**   
+1. what's the document's information density?   
+2. *strategy:* Uniform (FAQ, blog) → fixed-size is fine. Variable (legal, academic, financial) → you need a strategy that respects semantic units.  
 
 ### 2. The strategies, their intuition, and where they earn their cost
 #### Different chunking strategies
