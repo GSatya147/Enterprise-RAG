@@ -94,14 +94,14 @@ Let's go as a progression of strategies, improving from the previous one.
 - code blocks/snippets are atomic.  
 - If your parser gave you typed elements (which it should, from loading), your chunker should consume those types and apply different rules per type. this is the architecture most people don't build because they treat chunking as a generic text operation rather than a document-structure-aware operation.  
 
-### 3. Failure modes and the Decision Framework
-#### Failure modes that matter
+### 3. Failure modes and the Decision Framework  
+#### Failure modes that matter  
 
-**1. Semantic Orphaning**
+**1. Semantic Orphaning**  
 - Passed retrieval (precision), failed generation (context).
 - The chunk missing it's semantic context which got retrieved correctly through similarity but generation failed due to lack of context.
 - This is not a retrieval problem, it's a chunking problem masquerading as a generation problem. 
 - Fix the chunking do not blame LLM or prompts.
 
-**2. Split entity problem**
+**2. Split entity problem**  
 - 
