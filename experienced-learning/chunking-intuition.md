@@ -75,3 +75,29 @@ Let's go as a progression of strategies
 - If document changes, you need to change indices both in sync
 - And parent chunk size needs tuning per domain, cus it's the same problem again too large means noise, too small no learning at all.
 
+**4. Late chunking**
+- In standard chunking you split first, then embed. the problem is each chunk is embedded in isolation. so a chunk containing "its revenue grew 3%" has no idea that "its" refers to Apple, because Apple was in a different chunk that got processed separately.
+- Late chunking flips the order. you take the entire document, pass it through a long-context embedding model (Jina's long-context models are the reference implementation here), get token-level embeddings for every token in the document all at once, with full document context. then you pool those token embeddings within your chunk boundaries to produce chunk embeddings.
+- The key: when you pool, each token embedding already carries global document context because the attention mechanism saw the whole document. 
+- The practical implication is significant for documents with lots of anaphoric references pronouns, "the company," "the aforementioned clause" things that only make sense in context. late chunking improved retrieval on these by 10-12% in research settings.
+*Honest caveats*
+- You need long context embeddings models
+- The arxiv paper from April 2025 noted that late chunking trades semantic coherence for efficiency, `contextual retrieval` preserves coherence better, late chunking is faster but can sacrifice relevance on complex queries.
+
+**5. Contextual Retrieval (Anthropic's approach)**
+- Chunk first normally, then for every chunk, call an LLM with the full document and the chunk and ask it to generate a 50-100 token context summary describing what this chunk is about in the context of the whole document. prepend that summary to the chunk before embedding.
+- So instead of embedding "revenue grew 3% last quarter", you embed "This chunk is from Apple's Q3 2024 earnings report. It describes quarterly revenue performance relative to the previous quarter. Revenue grew 3% last quarter."
+- The embedding is now massively more informative. Anthropic's own numbers: 49% reduction in retrieval failures with hybrid search, 67% when combined with reranking. that's not a marginal gain.
+*Honest Caveats*
+- For a corpus of 100,000 chunks that's 100,000 LLM calls. that's expensive. 
+- The mitigation is prompt caching, since the document prefix is the same across all calls for a given document, you cache it and only pay for the chunk-specific part. Anthropic claims this brings the cost down by up to 90% with their caching implementation.
+
+**Notes:** Late chunking is more cheap but needs long context embedding model, degrades for very long documents. Contextual retrieval is expensive but works on any embedding model and document.
+
+**6. Structure aware/element type routing**
+- Tables are atomic. embed a table as one unit, optionally with its caption and column headers prepended as context.
+- Headings should be propagated into their child chunks as metadata or as a prefix.
+- code blocks/snippets are atomic.
+- If your parser gave you typed elements (which it should, from loading), your chunker should consume those types and apply different rules per type. this is the architecture most people don't build because they treat chunking as a generic text operation rather than a document-structure-aware operation.
+
+
