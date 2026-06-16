@@ -34,7 +34,7 @@ if prompt := st.chat_input("Type here"):
         CONTEXT.add_context(prompt, "user")
 
         retriever_obj = Retriever(user_query=prompt)
-        retriever_results = retriever_obj.corpus_retriever()
+        retriever_results = retriever_obj.mmr_retriever()
 
         reranker_obj = Reranker(user_query=prompt)
         reranker_results = reranker_obj.corpus_reranker(retriever_results=retriever_results)
