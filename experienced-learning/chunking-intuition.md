@@ -101,7 +101,17 @@ Let's go as a progression of strategies, improving from the previous one.
 - Passed retrieval (precision), failed generation (context).
 - The chunk missing it's semantic context which got retrieved correctly through similarity but generation failed due to lack of context.
 - This is not a retrieval problem, it's a chunking problem masquerading as a generation problem. 
-- Fix the chunking do not blame LLM or prompts.
+- Fix the chunking do not blame LLM or prompts.  
 
 **2. Split entity problem**  
-- 
+- An entity: a person, a company, a legal clause, a definition gets split across two chunks. both halves retrieve with moderate similarity to related queries but neither half contains the complete entity. the LLM sees half a definition and either hallucinates the rest or says it doesn't have enough information. this is especially brutal in legal and medical domains where precision of a full clause is everything.
+
+**3. Chunk size mismatch with query type**
+- Your queries are multi-hop reasoning questions ("compare the refund policy across product lines A, B, and C") but your chunks are 128-token precision chunks. each individual chunk correctly contains one piece of the answer but the LLM receives three tiny isolated fragments with no connective tissue
+- *Flip side*: your queries are precise lookups ("what is the late payment fee?") but your chunks are 1024-token parent chunks. you retrieve correctly but you hand the LLM a wall of text where the answer is one sentence buried in the middle.
+
+**4. Overlap-induced duplication**
+- you added 20% overlap to be safe. your top-k retrieval returns chunk 7 and chunk 8, which overlap by 100 tokens. the LLM now sees the same 100 tokens twice in its context. for factual questions this is just waste. for questions that require aggregation or counting, double-counted information can cause wrong answers. "how many times did X occur?" the LLM counts your overlap as two occurrences.
+- *Fix*: deduplication at retrieval time before context assembly, not reducing overlap at chunk time. but most pipelines don't have that step.
+
+**Stale chunk problem**
