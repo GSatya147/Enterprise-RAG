@@ -43,4 +43,35 @@
 - The correct move: filter MTEB to `retrieval` tasks only, look at the BEIR sub-benchmark which is retrieval-specific across multiple domains, find the domain closest to yours, and use that ranking as your starting point. then build a small eval set from your actual data — 100-200 query/chunk relevance pairs and benchmark candidate models on it. that eval set is worth more than any leaderboard number.
 - As of mid-2026, for English RAG the top performers are `Qwen3-Embedding-8B` (open source, outperforms all API models on MTEB at 70.6), Voyage `voyage-3-large` (strong on code/finance/legal domain variants), OpenAI `text-embedding-3-large` (best default for English with MRL support), and `BGE-M3` (best for hybrid retrieval with one model). for multilingual, `Cohere-Embed-v4` has the broadest language coverage with the smallest per-language performance floor.
 
+#### 3. The Fine tuning, Failure modes, and when to not touch generic model
+**When to fine-tune**  
+- "Our retrieval isn't great" is not a reason to fine-tune. 
+- You need to first verify that a generic model genuinely can't capture your domain's semantics before spending weeks on fine-tuning.
+
+**Signals that warrant fine-tuning**  
+- Your domain has terminology that means something different in your context than in general text (the word "pitch" in sports vs business vs audio engineering are completely different semantic neighborhoods, a generic model conflates them). 
+- Your queries are in a specialized format that generic models weren't trained on (structured query strings, clinical codes, ticker symbols).
+- Your eval set shows the generic model's nDCG@10 is below 0.7 on your real traffic and you've already ruled out chunking and retrieval strategy as the cause.
+
+**The right sequence**  
+1. Build your eval set first (minimum 150-500 real query/document relevance pairs), benchmark your candidate models, and only if the best generic model falls short do you reach for fine-tuning. 
+- One production case from a 2026 engineering blog: a client pushed for fine-tuning, the team resisted, built the eval set, discovered BGE-large out-of-the-box hit 0.76 nDCG@10 well above the threshold and shipped without fine-tuning, saving three weeks of work. the eval set was the investment that paid off.
+2. When you do fine-tune, the approach is contrastive learning on query-positive-hard_negative triplets. 
+- Hard negatives are the key, documents that are topically close to the correct answer but subtly wrong. 
+- Easy negatives (random documents) teach the model nothing useful. 
+- Hard negatives force the model to learn fine-grained discrimination within your domain. minimum 500 triplets for meaningful signal, ideally 2000-10000 for production-grade quality. `sentence-transformers` 3.x with `MultipleNegativesRankingLoss` or `CachedMultipleNegativesRankingLoss` is the standard implementation path.
+
+**The indexing cost that often is forgotten**  
+- Every time you change your embedding model: upgrade, deprecate, fine-tune a new version, you need to re-embed your entire corpus. for 50 million documents at 512 tokens average, that's 25 billion tokens. at OpenAI's pricing that's around $500 in API costs. on a self-hosted T4 GPU at 2000 tokens/second that's 138 hours of compute. this is not a one-time cost you absorb, it's a recurring cost every time you update the model.
+- *Architectural implementation:* if you anticipate your corpus growing large or your model evolving, design for re-indexing from the start. keep your raw chunked text in persistent storage separately from the vector index so re-indexing is a bulk re-embed operation, not a re-parse-re-chunk-re-embed operation. and if cost is a constraint, commit to a self-hosted model you control rather than a cloud API model whose pricing or availability can change under you.
+
+**The failure modes** 
+1. *Vocabulary mismatch* is the quiet killer. your users type "heart attack" and your documents say "myocardial infarction." a generic embedding model has learned these are related but may not have learned they're the same thing for retrieval purposes. precision suffers. - *The fix* is either domain fine-tuning or a hybrid retrieval strategy that adds a lexical component (in retrival component)
+2. *Out-of-distribution queries* is related. your embedding model was trained on a distribution of text. if your users query in ways that fall outside that distribution: specialized jargon, code snippets mixed with natural language, domain-specific abbreviations. the model produces unreliable embeddings and retrieval collapses. 
+- This is often invisible because cosine similarity still returns something, it just returns the wrong thing with high confidence.
+3. *Dimension-model mismatch* with your vector store is operational but causes real pain. some vector stores have performance characteristics that change significantly with embedding dimension. 
+- Plan your dimension choice alongside your vector store choice, not independently.
+4. *Embedding stability across model versions*, if you're using a cloud API embedding model and the provider updates the model, your existing index is now inconsistent with new embeddings computed from the updated model. hybrid index with old and new embeddings produces incorrect similarity scores. 
+- Version-pin your embedding models explicitly and treat any update as a re-indexing event.
+
 
