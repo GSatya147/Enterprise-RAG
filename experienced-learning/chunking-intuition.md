@@ -153,4 +153,13 @@ Let's go as a progression of strategies, improving from the previous one.
 
 **Notes:** chunk boundaries are set at index time and are immutable during query time. every other component: retrieval strategy, reranker, LLM, operates within the constraints your chunker created. this means your chunking decision needs to be made with the query distribution in mind, not just the document structure. a chunk is not a good chunk because it looks coherent in isolation. it's a good chunk because it's retrievable for the queries your users actually ask and answerable by the LLM once retrieved. those are two separate quality bars and you need to design for both simultaneously.
 
-**Evaluation framework**
+#### The Evaluation framework - How to actually know
+- It's not I look at the chunk and they seem reasonable
+
+**Standard personal framework**  
+1. Measure hit-rate and MMR at retrieval with your actual query set.
+2. Measure faithfulness and answer correctness end-to-end.
+3. Understand gap between the prior things.
+- If retrieval `hit-rate` high + `answer quality` low  → chunks retrievable not answerable → mode: `semantic orphaning`, `size mismatch`, or `split entities`.
+- If retrieval `hit rate` low  →  chunks did't embed into the right neighborhood for the queries → `chunk size`, `strategy`, or embedding model `mismatch`.
+- The gap tells you where to fix.
