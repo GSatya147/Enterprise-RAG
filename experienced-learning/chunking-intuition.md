@@ -115,3 +115,12 @@ Let's go as a progression of strategies, improving from the previous one.
 - *Fix*: deduplication at retrieval time before context assembly, not reducing overlap at chunk time. but most pipelines don't have that step.
 
 **Stale chunk problem**
+- Your document updates. a policy changes, a price changes, a date changes. you re-index the new document. but your vector store has chunks from both the old and new version because you inserted without deleting, or your deletion logic missed some chunks. now retrieval returns a mix of old and new chunks. the LLM sees contradictory information and either hedges or picks the wrong one.
+- This is an operational failure that starts at chunking architecture. if you assign chunk IDs that are deterministic and document-scoped (hash of document ID + chunk position), then updates become delete-by-document-ID then re-insert, which is clean. if your chunk IDs are random UUIDs, you've lost the ability to do clean updates.
+
+**The embedding model - chunk size mismatch**
+- Different embedding models have different optimal input lengths. a model trained predominantly on short texts (like early sentence-transformers) will produce poor embeddings for 1024-token chunks, the representation degrades as length increases because the model wasn't trained to compress that much information into one vector. 
+- Conversely, a long-context embedding model like text-embedding-3-large or Jina's long-context models can handle larger chunks and may actually underperform on very short chunks because they're not meaningfully utilizing their capacity.
+- Pick embedding model and chunk size as a shared decision.
+
+####
