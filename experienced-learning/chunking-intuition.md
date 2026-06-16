@@ -94,7 +94,7 @@ Let's go as a progression of strategies, improving from the previous one.
 - code blocks/snippets are atomic.  
 - If your parser gave you typed elements (which it should, from loading), your chunker should consume those types and apply different rules per type. this is the architecture most people don't build because they treat chunking as a generic text operation rather than a document-structure-aware operation.  
 
-### 3. Failure modes and the Decision Framework  
+### 3. Failure modes, The Decision Framework and The Evaluation Framework 
 #### Failure modes that matter  
 
 **1. Semantic Orphaning**  
@@ -123,4 +123,34 @@ Let's go as a progression of strategies, improving from the previous one.
 - Conversely, a long-context embedding model like text-embedding-3-large or Jina's long-context models can handle larger chunks and may actually underperform on very short chunks because they're not meaningfully utilizing their capacity.
 - Pick embedding model and chunk size as a shared decision.
 
-####
+#### The decision framework - how to actually choose
+- Draw the decisions on a whiteboard before system designing without hesitation
+- Start with your corpus - `ask is it homogeneous (one type, consistent structure) or heterogeneous (mixed type, variable structure)?`
+
+1. If **Homogeneous data corpus**
+```bash
+1. query type (look-up)              → recursive fixed size (512/1024 tokens), 10-15% overlap (don't complicate things)
+2. query type (Reasoning/synthesis)  → hierarical parent/child, small retrieval chunks & large generation chunks, simple alternative: sentence-window
+```
+2. If **Heterogeneous data corpus (mixed pdfs, web, tables, docs)** 
+- You need element-type routing 
+- Build a chunker that makes decisions based on element type, not just text length.
+```bash
+1. tables are atomic chunks.  
+2. headings propagate into children as metadata.  
+3. prose sections get semantic or recursive splitting depending on density. 
+4. code blocks are atomic. 
+```
+3. If your documents are **long-form narrative with lots of cross-references and pronouns** (legal contracts, research papers, books)  
+- Contextual retrieval if you can afford the LLM calls at index time → late chunking if your embedding model supports long context and your documents fit within its window.
+
+4. If your corpus is **multilingual or contains mixed code + prose**  
+- Late interaction models (ColBERT-style, Jina-ColBERT-v2) which handle token-level matching better than single-vector embeddings.  
+- chunking strategy matters less here because retrieval operates at token level anyway.
+
+5. If you genuinely **don't know your query distribution** yet  
+- Start with recursive 512 with overlap, instrument your pipeline with retrieval metrics from day one, and iterate. the worst mistake is over-engineering chunking before you have real query data telling you where it's failing.
+
+**Notes:** chunk boundaries are set at index time and are immutable during query time. every other component: retrieval strategy, reranker, LLM, operates within the constraints your chunker created. this means your chunking decision needs to be made with the query distribution in mind, not just the document structure. a chunk is not a good chunk because it looks coherent in isolation. it's a good chunk because it's retrievable for the queries your users actually ask and answerable by the LLM once retrieved. those are two separate quality bars and you need to design for both simultaneously.
+
+**Evaluation framework**
