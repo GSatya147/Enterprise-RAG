@@ -2,7 +2,7 @@ import os
 
 from langchain_text_splitters import RecursiveCharacterTextSplitter
 from sentence_transformers import SentenceTransformer
-from loader import Loader
+from src.loader import Loader
 
 class Chunker:
     def __init__(self, chunk_size, loader_docs, tokenizer):

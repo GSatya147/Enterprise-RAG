@@ -1,8 +1,8 @@
 import os
 
-from chunker import Chunker
+from src.chunker import Chunker
 from dotenv import load_dotenv
-from loader import Loader
+from src.loader import Loader
 from pinecone import ServerlessSpec
 from pinecone.grpc import PineconeGRPC as Pinecone
 from sentence_transformers import SentenceTransformer
