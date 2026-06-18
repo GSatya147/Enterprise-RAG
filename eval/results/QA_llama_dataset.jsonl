@@ -22,3 +22,4 @@
 {"question": "How is the context relevance score computed in the proposed framework?", "ground_truth": "The context relevance score is computed as the number of extracted sentences divided by the total number of sentences in the context.", "valid": true}
 {"question": "What is a potential risk of developers optimizing for RAGCHECKER's specific metrics?", "ground_truth": "Developers may focus on optimizing for RAGCHECKER's specific metrics to the detriment of broader utility and ethical considerations.", "valid": true}
 {"question": "What is a notable exception to the general trend of closed-source models outperforming open-source counterparts?", "ground_truth": "GPT-4o, which performs unexpectedly poorly on the benchmark.", "valid": true}
+
