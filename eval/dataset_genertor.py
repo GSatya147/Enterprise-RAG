@@ -74,11 +74,11 @@ class QAGenerator:
 
         try:
             response = litellm.completion(
-                model=os.getenv("DATASET_MODEL"),
+                model=os.getenv("DEEPSEEK_MODEL"),
                 messages=messages,
-                api_key=os.getenv("GROQ_API_KEY"),
+                api_key=os.getenv("DEEPSEEK_API_KEY"),
                 num_retries=3
-                )
+            )
 
             return response.choices[0].message.content
         
@@ -99,10 +99,10 @@ class QAGenerator:
         random.shuffle(stratified_chunks)
         for chunk in stratified_chunks:
             qa_pairs = self.qa_generator(chunk)
-            time.sleep(5)
+            time.sleep(3)
             json_string = json.loads(qa_pairs)
 
-            with open("./eval/results/baseline_results.jsonl", "a") as f:
+            with open("./eval/results/QA_deepseek_dataset.jsonl", "a") as f:
                 f.write(json.dumps(json_string) + "\n")
 
 if __name__=="__main__":
