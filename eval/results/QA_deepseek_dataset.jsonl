@@ -22,3 +22,4 @@
 {"question": "What is the title or description of the prompt shown in Figure 10?", "ground_truth": "The prompt for reference-guided multi-turn single-answer grading.", "valid": true}
 {"question": "What is the definition of a 'comparison' type in the multi-hop QA verification system?", "ground_truth": "Final question compares a shared attribute/dimension (e.g., date, numeric quantity, size) between two entities derived from QA1 and QA2.", "valid": true}
 {"question": "What advantage does RAG have over standard extractive approaches?", "ground_truth": "Documents with clues about the answer but that do not contain the answer verbatim can still contribute towards a correct answer being generated, which is not possible with standard extractive approaches.", "valid": true}
+
