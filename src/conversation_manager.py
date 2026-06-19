@@ -3,7 +3,7 @@ class ConversationManager:
         self.CONTEXT: list[dict] = []
 
     def add_context(self, message: str, role: str) -> list[dict]:
-        message_dict = {"role": role, "parts": [{"text" : message}]}
+        message_dict = {"role": role, "content": message}
 
         self.CONTEXT.append(message_dict)
 

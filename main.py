@@ -45,7 +45,7 @@ if prompt := st.chat_input("Type here"):
         with st.chat_message("assistant"):
             assistant_response_string = st.write_stream(generator_obj.response_generator(reranker_results=reranker_results))
 
-        CONTEXT.add_context(assistant_response_string, "model")
+        CONTEXT.add_context(assistant_response_string, "assistant")
 
     except Exception as e:
         print(e)
