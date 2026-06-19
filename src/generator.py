@@ -1,29 +1,13 @@
 import os
-from google import genai
-from google.genai import types, errors
+
 from dotenv import load_dotenv
+from litellm import completion, RateLimitError, APIError, ServiceUnavailableError, Timeout, AuthenticationError, BadRequestError
 
 load_dotenv()
 
 class ResponseGenerator:
     def __init__(self, context=None):
         self.context_history = context
-
-        try:
-            self.client = genai.Client(
-                api_key=os.getenv("GEMINI_API_KEY"),
-                http_options=types.HttpOptions(
-                    timeout=60000,
-                    retry_options=types.HttpRetryOptions(
-                        attempts=3,  # Maximum 3 attempts (including original)
-                        initial_delay=1.0,  # 1 second initial delay
-                        max_delay=30.0,  # Maximum 60 seconds between retries
-                    ),
-                ),
-            )
-
-        except Exception as e:
-            print(e)
 
     def response_generator(self, reranker_results):
         context = "\n\n".join(
@@ -38,24 +22,35 @@ class ResponseGenerator:
         """
 
         try:
-            response_stream = self.client.models.generate_content_stream(
-                model=os.getenv("GEMINI_MODEL"),
-                contents=self.context_history,
-                config=types.GenerateContentConfig(system_instruction=self.sys_prompt),
+            response_stream = completion(
+                model=os.getenv("DEEPSEEK_MODEL"),
+                messages=self.context_history,
+                stream=True,
+                num_retries=3,
             )
 
             for chunk in response_stream:
-                if chunk.text:
-                    yield chunk.text
+                delta = chunk.choices[0].delta.content
+                if delta is not None:
+                    yield delta
 
-        except errors.ClientError as e:  # explore other codes like 400, 401, 404
-            if e.code == 429:
-                print(f"Rate limited error: {e.message}")
-            else:
-                print(f"Client error: {e.message}")
+        except RateLimitError as e:
+            print(f"Rate limit error: {e.message}")
 
-        except errors.ServerError as e:
-            print(f"Server error: {e.message} ")
+        except APIError as e:
+            print(f"API error: {e.message} ")
+
+        except BadRequestError as e:
+            print(f"Bad request error: {e.message} ")
+
+        except Timeout as e:
+            print(f"Time out error: {e.message} ")
+        
+        except AuthenticationError as e:
+            print(f"Auth error: {e.message} ")
+
+        except ServiceUnavailableError as e:
+            print(f"Service unavailable error: {e.message} ")
 
         except Exception as e:
             print(f"Unexpected error: {e}")
