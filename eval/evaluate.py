@@ -54,6 +54,7 @@ class EvaluateRAG:
         async with semaphore:
             pass
 
+
 async def main():
     semaphore = asyncio.Semaphore(3) 
 
