@@ -6,7 +6,7 @@ from dotenv import load_dotenv
 load_dotenv()
 
 class ResponseGenerator:
-    def __init__(self, context):
+    def __init__(self, context=None):
         self.context_history = context
 
         try:
