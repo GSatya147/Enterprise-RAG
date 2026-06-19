@@ -43,12 +43,18 @@ class EvaluateRAG:
             for chunk in generator_obj.response_generator(reranker_results=reranker_results):
                 generator_response += chunk
 
-            return {
+            field = {
                 "question": question,
                 "answer": generator_response,        
                 "contexts": [f'{chunk.get("content")}' for chunk in reranker_results],        
                 "ground_truth": ground_truth             
             }
+
+            json_string = json.loads(field)
+            with open("./eval/results/pipeline_results_dict.jsonl", "a") as af:
+                af.write(json.dumps(json_string))
+
+            return field
 
     async def ragas_evaluate(self, semaphore):
         async with semaphore:
