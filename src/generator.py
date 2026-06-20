@@ -6,8 +6,8 @@ from litellm import completion, RateLimitError, APIError, ServiceUnavailableErro
 load_dotenv()
 
 class ResponseGenerator:
-    def __init__(self, context=None):
-        self.context_history = context
+    def __init__(self, context):
+        self.context = context
 
     def response_generator(self, reranker_results):
         context = "\n\n".join(
@@ -21,10 +21,13 @@ class ResponseGenerator:
             if the given context is inadequate, just answer "It is out of the provided knowledge" ONLY.
         """
 
+        messages = [{"role" : "system", "content" : self.sys_prompt}]
+        messages.extend(self.context)
         try:
             response_stream = completion(
                 model=os.getenv("DEEPSEEK_MODEL"),
-                messages=self.context_history,
+                messages=messages,
+                api_key=os.getenv("DEEPSEEK_API_KEY"),
                 stream=True,
                 num_retries=3,
             )
