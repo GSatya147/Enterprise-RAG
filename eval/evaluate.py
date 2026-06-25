@@ -3,7 +3,6 @@ import json
 import os
 
 from dotenv import load_dotenv
-import litellm
 import sys
 from unittest.mock import MagicMock
 sys.modules['langchain_community.chat_models.vertexai'] = MagicMock()
